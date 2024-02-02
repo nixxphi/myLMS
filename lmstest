@@ -1,0 +1,350 @@
+//I wonder if its a bad thing all my codes start like this 
+const readline = require('readline').createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function prompt(query) {
+  return new Promise((resolve) => {
+    readline.question(query, (answer) => {
+      resolve(answer);
+      readline.close(); 
+    });
+  });
+}
+// Abstract class for common school-related data and methods
+class LMS {
+  constructor(name, address, website) {
+    if (this.constructor === LMS) {
+      throw new Error('LMS is an abstract class and cannot be instantiated directly.');
+    }
+    this.name = name;
+    this.address = address;
+    this.website = website;
+  }
+
+  getDetails() {
+    return {
+      name: this.name,
+      address: this.address,
+      website: this.website,
+    };
+  }
+
+  // Abstraction methods to be implemented in subclasses
+  listRoles() {
+    const availableRoles = ["Admin", "Tutor", "Student", "Management"];
+    return availableRoles;
+  }
+  listCourses() {
+    //Using an array of courses
+    if (this.courses) {
+      return this.courses.slice();
+    } else {
+      return [];
+    }
+
+   listUsers();
+   processPayment(userId, amount);
+}
+}
+// Subclass representing different roles in the school
+class Role {
+  constructor(name, description) {
+    this.name = name;
+    this.description = description;
+  }
+
+ 
+  listRoles() {
+    const availableRoles = ["Admin", "Tutor", "Student"];
+    return availableRoles;
+  }
+  updateDetails(newDetails){
+    Object.assign(this, newDetails);
+  };
+
+  getDetails() {
+    return {
+      name: this.name,
+      description: this.description,
+    };
+  }
+  
+}
+// User class with common user information and role association, my headache for the week. Thank you Livinus
+class User extends Role{
+  constructor(name, userName, userId, role, userEmail, userDob, userAddress, phoneNumber) {
+    super(name, userName, userId, role, userEmail, userDob, userAddress, phoneNumber);
+    this.name = name;
+    this.userName = userName;
+    this.userId = userId;
+    this.role = role;
+    this.userEmail = userEmail;
+    this.userDob = userDob;
+    this.userAddress = userAddress;
+    this.phoneNumber = phoneNumber;
+  }
+
+      
+      static createUser(name, userName, userId, role, userEmail, userDob, userAddress, phoneNumber) {
+        return new User(name, userName, userId, role, userEmail, userDob, userAddress, phoneNumber);
+      }
+    
+  getRoleName() {
+   return this.role;
+  }
+  // Generate a unique userId (replace with your logic)
+   assignId(){const randomNumber = Math.floor(Math.random() * 900) + 100;
+    return randomNumber.toString();
+   } // Convert to string for display or storage
+
+  static deleteUser(userId) {
+    const users = User.users; 
+    const index = users.findIndex(user => user.userId === userId);
+
+    if (index !== -1) {
+      users.splice(index, 1); // This should remove the user from the array... i think 
+      return true; console.log("Deleted")
+    } else {
+      return false; console.log("User not found");
+    }
+  }
+
+static searchUsers(query) {
+  //figuring this part out made want to yell at js's creators. Couldn't this have been easier?? 
+  const users = User.users || [];
+
+  return users.filter(user => {
+    const searchProps = ['name', 'userName', 'userId', 'userEmail'];
+    return searchProps.some(prop => {
+      const propValue = user[prop]; // Get the property value
+      return propValue && propValue.toLowerCase().includes(query.toLowerCase()); // Check for value and match
+    });
+  }).map(user => user.getUserDetails()); // Return user details objects
+}
+
+static editUser(userId, updatedDetails) {
+  const users = User.users || []; // Ensure users array exists
+
+  const userIndex = users.findIndex(user => user.userId === userId);
+
+  if (userIndex !== -1) {
+    const user = users[userIndex];
+    user.updateDetails(updatedDetails);
+    return user.getUserDetails(); // Return updated user details
+  } else {
+    return Error(`User with ID ${userId} not found`);
+  }
+}
+
+  
+
+   
+  static listUsers(filterCriteria = {}) {
+        if (this.users) {
+          return this.users.filter(user => {
+            let shouldInclude = true;
+            if (filterCriteria.role && filterCriteria.role !== user.role) {
+              shouldInclude = false;
+            }
+            if (filterCriteria.userName && !user.userName.includes(filterCriteria.userName)) {
+              shouldInclude = false;
+            }
+            return shouldInclude;
+          }).map(user => user.getDetails()); 
+        }else {
+           return [];
+      }
+    }
+  } 
+// Subclasses representing user types with roles
+class Student extends User {
+  constructor(name, userName, userId, userEmail, userDob, userAddress, gradeLevel, major) {
+    super(name, userName, userId, userEmail, userDob, userAddress, "Student");
+    this.gradeLevel = gradeLevel;
+    this.major = major;
+  }
+}
+
+class Tutor extends User {
+  constructor(name, userName, userId, userEmail, userDob, userAddress, course, schedule) {
+    super(name, userName, userId, userEmail, userDob, userAddress, "Tutor");
+    this.course = course;
+    this.schedule = schedule || {}; // I'm definitely leaving thtat schedule empty, too much to do
+  }
+
+  searchStudents(query) {
+    return Student.searchUsers(query); // Thank God I already put this in the user class.
+  }
+
+  createSchedule(date, time, duration) {
+    this.schedule[date] = { time, duration };
+  }
+
+  getSchedule() {
+    return this.schedule;
+  }
+}
+
+class Admin extends User {
+  constructor(name, userName, userId, userEmail, userDob, userAddress) {
+    super(name, userName, userId, userEmail, userDob, userAddress, "Admin");
+  }
+  
+  createUser(name, userName, userId, userEmail, userDob, userAddress, role) {
+    return User.createUser(name, userName, userId, userEmail, userDob, userAddress, role);
+  }
+
+  deleteUser(userId) {
+    return User.deleteUser(userId);
+  }
+
+  searchUsers(query) {
+    return User.searchUsers(query);
+  }
+
+  editUser(userId, updatedDetails) {
+    return User.editUser(userId, updatedDetails);
+  }
+
+  setFees(feeType, amount, dueDate) {
+    // ... (implement logic to set fees)
+  }
+
+  editTutorSchedule(tutorId, date, newTime, newDuration) {
+    const tutor = User.searchUsers({ userId: tutorId })[0]; // Find the tutor user
+    if (tutor && tutor instanceof Tutor) {
+      tutor.schedule[date] = { time: newTime, duration: newDuration };
+    } else {
+      return Error(`Invalid tutor ID or user role provided`);
+    }
+  }
+}
+class Course {
+    constructor(name, department, tutor, schedule) {
+      this.name = name;
+      this.department = department;
+      this.tutor = tutor;
+      this.schedule = schedule; // Array of { date: string, startTime: string, duration: number }
+      this.enrolledStudents = []; // Array of student IDs
+    }
+  
+    addStudent(studentId) {
+      if (!this.enrolledStudents.includes(studentId)) {
+        this.enrolledStudents.push(studentId);
+      }
+    }
+  
+    removeStudent(studentId) {
+      const index = this.enrolledStudents.indexOf(studentId);
+      if (index !== -1) {
+        this.enrolledStudents.splice(index, 1);
+      }
+    }
+  
+    getDetails() {
+      return {
+        name: this.name,
+        department: this.department,
+        instructor: this.instructor,
+        schedule: this.schedule,
+        enrolledStudents: this.enrolledStudents.length, // Protect student privacy
+      };
+    }
+  }
+  
+  class Frontend extends Course {
+    constructor(name, instructor, schedule) {
+      super("Frontend Development", "Web Technologies", instructor, schedule);
+    }
+  }
+  
+  class Backend extends Course {
+    constructor(name, instructor, schedule) {
+      super("Backend Development", "Web Technologies", instructor, schedule);
+    }
+  }
+  
+  class Web3 extends Course {
+    constructor(name, instructor, schedule) {
+      super("Web3 Development", "Blockchain Technologies", instructor, schedule);
+    }
+  }
+  
+  class ProductDesign extends Course {
+    constructor(name, instructor, schedule) {
+      super("Product Design", "Design Thinking", instructor, schedule);
+    }
+  }
+      // My failed attempt at a method to create a new user from prompted inputs
+      //maybe i should move it down??
+  
+  async function userSignUp(user){
+    const availableRoles = [
+      student = new Student([]),
+      tutor = new Tutor([]),
+    ];
+    const roleChoices = availableRoles.map(role => role.name);
+  
+    const chosenRole = await prompt(`Available courses:
+    1. ${roleChoices[0]} student 
+    2. ${roleChoices[1]} tutor
+  
+   Enter the number of your desired role (or "cancel" to skip):`);
+
+      if (chosenRole === "cancel") {
+        console.log("Enrollment cancelled.");
+        cancelEnrollment = true;
+      } else {
+        const roleId = parseInt(chosenRole) - 1;
+        if (!isNaN(roleId) && roleId >= 0 && roleId < availableRoles.length) {
+          const selectedRole = availableRoles[courseId];
+          selectedRole.addUser(user.userId);
+          console.log(`You have successfully enrolled as a ${selectedRole.name}.`);
+          enrolled = true; // Set flag to mark successful enrollment
+        } else {
+          console.log("Invalid role choice. Please try again.");
+        }
+      }
+    } 
+
+
+async function studentSignUp(student){
+    const availableCourses = [
+      new Frontend("Intro to React", "Alice", [{ date: "2024-02-15", startTime: "09:30", duration: 60 }]),
+      new Backend("Node.js Essentials", "Bob", [{ date: "2024-02-20", startTime: "12:00", duration: 90 }]),
+      new Web3("Building dApps", "Charlie", [{ date: "2024-02-25", startTime: "14:00", duration: 120 }]),
+      new ProductDesign("UI/UX Design Fundamentals", "David", [{ date: "2024-03-01", startTime: "18:00", duration: 75 }]),
+    ];
+  
+    const courseChoices = availableCourses.map(course => course.name);
+  
+    const chosenCourse = await prompt(`Available courses:
+    1. ${courseChoices[0]}
+    2. ${courseChoices[1]}
+    3. ${courseChoices[2]}
+    4. ${courseChoices[3]} 
+  
+   Enter the number of your desired course (or "cancel" to skip):`);
+
+      if (chosenCourse === "cancel") {
+        console.log("Enrollment cancelled.");
+        cancelEnrollment = true;
+      } else {
+        const courseId = parseInt(chosenCourse) - 1;
+        if (!isNaN(courseId) && courseId >= 0 && courseId < availableCourses.length) {
+          const selectedCourse = availableCourses[courseId];
+          selectedCourse.addStudent(student.userId);
+          console.log(`You have successfully enrolled in ${selectedCourse.name}.`);
+          enrolled = true; // Set flag to mark successful enrollment, couldn't tell if it was working without it
+        } else {
+          console.log("Invalid course choice. Please try again.");
+        }
+      }
+    } 
+
+  
+  const frontendbabe  = new Student("Nel", "hotNelly", "2023", "thathotbabe@class.com", "2023-11-23", "Enugu", 1, "Frontend Development");
+  studentSignUp(frontendbabe);
+
